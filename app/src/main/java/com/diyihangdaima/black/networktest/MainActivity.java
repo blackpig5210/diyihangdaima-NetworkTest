@@ -10,12 +10,18 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -32,6 +38,7 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
@@ -95,15 +102,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
                 try {
                     HttpClient httpClient = new DefaultHttpClient();
-                    HttpGet httpGet = new HttpGet("http://10.0.2.2/get_data.xml");
+                    //指定访问的服务器地址
+                    HttpGet httpGet = new HttpGet("http://10.0.2.2/get_data.json");
+                    //HttpGet httpGet = new HttpGet("http://10.0.2.2/get_data.xml");
                    // HttpGet httpGet = new HttpGet("http://www.baidu.com");
                     HttpResponse httpResponse = httpClient.execute(httpGet);
                     if (httpResponse.getStatusLine().getStatusCode() == 200) {
                         //请求和响应都成功了
                         HttpEntity entity = httpResponse.getEntity();
                         String response = EntityUtils.toString(entity, "utf-8");
+                        parseJSONWithGSON(response);
+//                        parseJSONWithJSONObject(response);
 //                        parseXMLWithPull(response);
-                        parseXMLWithSAX(response);
+//                        parseXMLWithSAX(response);
 //                        Message message = Message.obtain();
 //                        message.what = SHOW_RESPONSE1;
 //                        //将服务器返回的结果存放在Message中
@@ -115,6 +126,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         }).start();
+    }
+
+    private void parseJSONWithGSON(String jsonData) {
+        Gson gson = new Gson();
+        List<App> appList = gson.fromJson(jsonData, new TypeToken<List<App>>() {}.getType());
+        for (App app : appList) {
+            Log.d("MainActivity", "id is " + app.getId());
+            Log.d("MainActivity", "name is " + app.getName());
+            Log.d("MainActivity", "version is " + app.getVersion());
+        }
+    }
+
+    private void parseJSONWithJSONObject(String jsonData) {
+        try {
+            JSONArray jsonArray = new JSONArray(jsonData);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String id = jsonObject.getString("id");
+                String name = jsonObject.getString("name");
+                String version = jsonObject.getString("version");
+                Log.d("MainActivity", "id is " + id);
+                Log.d("MainActivity", "name is " + name);
+                Log.d("MainActivity", "version is " + version);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private void parseXMLWithSAX(String xmlData) {
